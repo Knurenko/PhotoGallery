@@ -94,7 +94,8 @@ public class PhotoGalleryFragment extends Fragment {
     private class FetchItemsTask extends AsyncTask<Void,Void,List<GalleryItem>> {
         @Override
         protected List<GalleryItem> doInBackground(Void... params) {
-            return new FlickrFetchr().fetchItems();
+            final String api_key = getString(R.string.api_key);
+            return new FlickrFetchr().fetchItems(api_key);
         }
 
         @Override
