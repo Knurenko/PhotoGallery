@@ -47,7 +47,7 @@ public class FlickrFetchr {
         return new String(getUrlBytes(urlSpec));
     }
 
-    public List<GalleryItem> fetchItems(String api_key) {
+    public List<GalleryItem> fetchItems(String api_key, int page) {
 
         List<GalleryItem> items = new ArrayList<>();
 
@@ -59,11 +59,15 @@ public class FlickrFetchr {
                     .appendQueryParameter("format", "json")
                     .appendQueryParameter("nojsoncallback", "1")
                     .appendQueryParameter("extras", "url_s")
+                    .appendQueryParameter("page", String.valueOf(page))
+                    .appendQueryParameter("per_page", "10")
                     .build().toString();
             String jsonString = getUrlString(url);
             Log.i(TAG, "Received JSON: " + jsonString);
             JSONObject jsonBody = new JSONObject(jsonString);
+
             parseItems(items, jsonBody);
+            Log.d(TAG, "\n Items fetched'n'parsed, page = " + String.valueOf(page));
         } catch (IOException ioe) {
             Log.e(TAG, "Failed to fetch items", ioe);
         } catch (JSONException je) {

@@ -20,6 +20,9 @@ public class PhotoGalleryFragment extends Fragment {
 
     private RecyclerView mPhotoRecyclerView;
     private List<GalleryItem> mItems = new ArrayList<>();
+    private int mPageToLoad;
+
+    private boolean firstLoad;
 
     public static PhotoGalleryFragment newInstance() {
         return new PhotoGalleryFragment();
@@ -29,6 +32,11 @@ public class PhotoGalleryFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+
+        //number of page to be loaded in recycler container
+        mPageToLoad = 1;
+        firstLoad = true;
+
         new FetchItemsTask().execute();
     }
 
@@ -40,6 +48,19 @@ public class PhotoGalleryFragment extends Fragment {
         mPhotoRecyclerView = (RecyclerView) v.findViewById(R.id.photo_recycler_view);
         mPhotoRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 3));
 
+        mPhotoRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                if (!mPhotoRecyclerView.canScrollVertically(1)) {
+                    // load new page
+                    mPageToLoad++;
+
+                    //code to add new page to collection
+                    new FetchItemsTask().execute();
+                }
+            }
+        });
+
         setupAdapter();
 
         return v;
@@ -47,7 +68,12 @@ public class PhotoGalleryFragment extends Fragment {
 
     private void setupAdapter() {
         if (isAdded()) {
-            mPhotoRecyclerView.setAdapter(new PhotoAdapter(mItems));
+            if (firstLoad){
+                mPhotoRecyclerView.setAdapter(new PhotoAdapter(mItems));
+                firstLoad = false;
+            } else {
+                mPhotoRecyclerView.getAdapter().notifyDataSetChanged();
+            }
         }
     }
 
@@ -95,12 +121,16 @@ public class PhotoGalleryFragment extends Fragment {
         @Override
         protected List<GalleryItem> doInBackground(Void... params) {
             final String api_key = getString(R.string.api_key);
-            return new FlickrFetchr().fetchItems(api_key);
+            return new FlickrFetchr().fetchItems(api_key, mPageToLoad);
         }
 
         @Override
         protected void onPostExecute(List<GalleryItem> items) {
-            mItems = items;
+            if (firstLoad){
+                mItems = items;
+            } else {
+                mItems.addAll(items);
+            }
             setupAdapter();
         }
     }
